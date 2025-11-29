@@ -1,0 +1,66 @@
+[
+  {
+    "id": "1",
+    "name": "Premium Wireless Headphones",
+    "price": 299.99,
+    "description": "High-quality wireless headphones with active noise cancellation and premium sound quality. Perfect for music lovers and professionals.",
+    "category": "Audio",
+    "image": "product-headphones",
+    "stock": 45,
+    "rating": 4.8,
+    "featured": true
+  },
+  {
+    "id": "2",
+    "name": "Smart Watch Pro",
+    "price": 399.99,
+    "description": "Advanced fitness tracking, heart rate monitoring, and smartphone notifications in a sleek design.",
+    "category": "Wearables",
+    "image": "product-watch",
+    "stock": 32,
+    "rating": 4.6,
+    "featured": true
+  },
+  {
+    "id": "3",
+    "name": "Leather Backpack",
+    "price": 189.99,
+    "description": "Premium leather backpack with laptop compartment. Elegant design meets functionality.",
+    "category": "Bags",
+    "image": "product-backpack",
+    "stock": 28,
+    "rating": 4.9,
+    "featured": true
+  },
+  {
+    "id": "4",
+    "name": "Classic Sunglasses",
+    "price": 149.99,
+    "description": "Timeless design with UV protection and durable gold frames. Perfect for any occasion.",
+    "category": "Accessories",
+    "image": "product-sunglasses",
+    "stock": 60,
+    "rating": 4.5
+  },
+  {
+    "id": "5",
+    "name": "Professional Laptop Bag",
+    "price": 129.99,
+    "description": "Durable canvas and leather laptop bag with multiple compartments for all your essentials.",
+    "category": "Bags",
+    "image": "product-laptop-bag",
+    "stock": 40,
+    "rating": 4.7
+  },
+  {
+    "id": "6",
+    "name": "Wireless Earbuds",
+    "price": 179.99,
+    "description": "True wireless earbuds with premium sound and all-day battery life in a stylish charging case.",
+    "category": "Audio",
+    "image": "product-earbuds",
+    "stock": 75,
+    "rating": 4.6,
+    "featured": true
+  }
+]
