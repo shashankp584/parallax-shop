@@ -4,9 +4,12 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, ShoppingCart, Star, Minus, Plus, Package, Shield, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/contexts/CartContext';
 import productsData from '@/data/products.json';
-import { Product } from '@/lib/types';
+import { Product, Review } from '@/lib/types';
+import ReviewList from '@/components/ReviewList';
+import ReviewForm from '@/components/ReviewForm';
 
 import headphonesImg from '@/assets/product-headphones.jpg';
 import watchImg from '@/assets/product-watch.jpg';
@@ -31,8 +34,16 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
+  const [reviews, setReviews] = useState<Review[]>([]);
 
   const product = products.find(p => p.id === id);
+
+  // Initialize reviews from product data
+  useState(() => {
+    if (product?.reviews) {
+      setReviews(product.reviews);
+    }
+  });
 
   if (!product) {
     return (
@@ -51,6 +62,22 @@ const ProductDetail = () => {
     addToCart(product, quantity);
     navigate('/cart');
   };
+
+  const handleReviewSubmit = (rating: number, comment: string) => {
+    const newReview: Review = {
+      id: `r${Date.now()}`,
+      userId: 'current-user',
+      userName: 'You',
+      rating,
+      comment,
+      createdAt: new Date().toISOString(),
+    };
+    setReviews([newReview, ...reviews]);
+  };
+
+  const averageRating = reviews.length > 0
+    ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
+    : product?.rating || 0;
 
   return (
     <div className="min-h-screen py-12">
@@ -104,7 +131,7 @@ const ProductDetail = () => {
                       <Star
                         key={i}
                         className={`h-5 w-5 ${
-                          i < Math.floor(product.rating)
+                          i < Math.floor(averageRating)
                             ? 'fill-primary text-primary'
                             : 'text-muted'
                         }`}
@@ -112,7 +139,7 @@ const ProductDetail = () => {
                     ))}
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    {product.rating} (124 reviews)
+                    {averageRating.toFixed(1)} ({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})
                   </span>
                 </div>
                 <p className="text-3xl font-bold text-primary">
@@ -191,6 +218,26 @@ const ProductDetail = () => {
               </div>
             </motion.div>
           </div>
+
+          {/* Reviews Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="mt-16"
+          >
+            <h2 className="text-3xl font-bold mb-8">Customer Reviews</h2>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <ReviewList reviews={reviews} />
+              </div>
+              
+              <div>
+                <ReviewForm productId={product.id} onReviewSubmit={handleReviewSubmit} />
+              </div>
+            </div>
+          </motion.div>
         </motion.div>
       </div>
     </div>
