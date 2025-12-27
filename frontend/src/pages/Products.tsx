@@ -1,54 +1,79 @@
-import { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { Search, SlidersHorizontal } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { ProductCard } from '@/components/ProductCard';
+import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { Search, SlidersHorizontal } from "lucide-react";
+
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ProductCard } from "@/components/ProductCard";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import productsData from '@/data/products.json';
-import { Product } from '@/lib/types';
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
-const products = productsData as Product[];
-const categories = Array.from(new Set(products.map(p => p.category)));
+import { productService, Product } from "@/services/product.service";
 
 const Products = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('featured');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("latest");
+
+  // Fetch products from backend
+  useEffect(() => {
+    productService
+      .getProducts()
+      .then((res) => setProducts(res.items))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Extract categories dynamically
+  const categories = useMemo(() => {
+    return Array.from(
+      new Set(products.map((p) => p.category).filter(Boolean))
+    ) as string[];
+  }, [products]);
 
   const filteredProducts = useMemo(() => {
-    let filtered = products.filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           product.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+    let filtered = products.filter((product) => {
+      const matchesSearch =
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesCategory =
+        selectedCategory === "all" ||
+        product.category === selectedCategory;
+
       return matchesSearch && matchesCategory;
     });
 
-    // Sort products
     switch (sortBy) {
-      case 'price-asc':
+      case "price-asc":
         filtered = [...filtered].sort((a, b) => a.price - b.price);
         break;
-      case 'price-desc':
+      case "price-desc":
         filtered = [...filtered].sort((a, b) => b.price - a.price);
         break;
-      case 'rating':
-        filtered = [...filtered].sort((a, b) => b.rating - a.rating);
-        break;
-      case 'featured':
+      case "latest":
       default:
-        filtered = [...filtered].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+        filtered = [...filtered].sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() -
+            new Date(a.createdAt).getTime()
+        );
     }
 
     return filtered;
-  }, [searchTerm, selectedCategory, sortBy]);
+  }, [products, searchTerm, selectedCategory, sortBy]);
+
+  if (loading) {
+    return <div className="text-center py-20">Loading products...</div>;
+  }
 
   return (
     <div className="min-h-screen py-12">
@@ -88,16 +113,18 @@ const Products = () => {
             {/* Categories */}
             <div className="flex flex-wrap gap-2">
               <Badge
-                variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                variant={selectedCategory === "all" ? "default" : "outline"}
                 className="cursor-pointer"
-                onClick={() => setSelectedCategory('all')}
+                onClick={() => setSelectedCategory("all")}
               >
                 All
               </Badge>
-              {categories.map(category => (
+              {categories.map((category) => (
                 <Badge
                   key={category}
-                  variant={selectedCategory === category ? 'default' : 'outline'}
+                  variant={
+                    selectedCategory === category ? "default" : "outline"
+                  }
                   className="cursor-pointer"
                   onClick={() => setSelectedCategory(category)}
                 >
@@ -113,15 +140,13 @@ const Products = () => {
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="featured">Featured</SelectItem>
+                <SelectItem value="latest">Latest</SelectItem>
                 <SelectItem value="price-asc">Price: Low to High</SelectItem>
                 <SelectItem value="price-desc">Price: High to Low</SelectItem>
-                <SelectItem value="rating">Highest Rated</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Results count */}
           <p className="text-sm text-muted-foreground">
             Showing {filteredProducts.length} of {products.length} products
           </p>
@@ -131,7 +156,14 @@ const Products = () => {
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredProducts.map((product, index) => (
-              <ProductCard key={product.id} product={product} index={index} />
+              <ProductCard
+                key={product.id}
+                product={{
+                  ...product,
+                  image: product.images[0]?.url,
+                }}
+                index={index}
+              />
             ))}
           </div>
         ) : (
@@ -147,8 +179,8 @@ const Products = () => {
               variant="outline"
               className="mt-4"
               onClick={() => {
-                setSearchTerm('');
-                setSelectedCategory('all');
+                setSearchTerm("");
+                setSelectedCategory("all");
               }}
             >
               Clear Filters

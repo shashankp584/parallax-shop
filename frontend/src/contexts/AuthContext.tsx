@@ -1,71 +1,70 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User } from '@/lib/types';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { authService } from "@/services/auth.service";
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: "ADMIN" | "USER";
+}
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
-  logout: () => void;
+  isAuthenticated: boolean;
   isAdmin: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string) => Promise<void>;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock JWT token generation
-const generateMockToken = () => {
-  return 'mock-jwt-' + Math.random().toString(36).substr(2, 9);
-};
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
+    const stored = localStorage.getItem("user");
+    return stored ? JSON.parse(stored) : null;
   });
+
+  const isAuthenticated = !!user;
+  const isAdmin = user?.role === "ADMIN";
 
   useEffect(() => {
     if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('token', generateMockToken());
+      localStorage.setItem("user", JSON.stringify(user));
     } else {
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
+      localStorage.removeItem("user");
+      localStorage.removeItem("accessToken");
     }
   }, [user]);
 
   const login = async (email: string, password: string) => {
-    // Mock login - in production, this would call your API
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const mockUser: User = {
-      id: '1',
-      email,
-      name: email.split('@')[0],
-      role: email.includes('admin') ? 'admin' : 'customer'
-    };
-    
-    setUser(mockUser);
+    const res = await authService.login({ email, password });
+    setUser(res.user);
   };
 
-  const signup = async (email: string, password: string, name: string) => {
-    // Mock signup - in production, this would call your API
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const mockUser: User = {
-      id: Math.random().toString(36).substr(2, 9),
-      email,
-      name,
-      role: 'customer'
-    };
-    
-    setUser(mockUser);
+  const signup = async (name: string, email: string, password: string) => {
+    const res = await authService.register({ name, email, password });
+    setUser(res.user);
   };
 
   const logout = () => {
+    authService.logout();
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isAdmin: user?.role === 'admin' }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        isAdmin,
+        login,
+        signup,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -73,6 +72,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  if (!context) {
+    throw new Error("useAuth must be used within AuthProvider");
+  }
   return context;
 };

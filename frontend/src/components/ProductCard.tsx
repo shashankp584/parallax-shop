@@ -1,36 +1,24 @@
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { ShoppingCart, Star } from 'lucide-react';
-import { Product } from '@/lib/types';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { useCart } from '@/contexts/CartContext';
-import { Badge } from '@/components/ui/badge';
+import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { ShoppingCart } from "lucide-react";
 
-// Import all product images
-import headphonesImg from '@/assets/product-headphones.jpg';
-import watchImg from '@/assets/product-watch.jpg';
-import backpackImg from '@/assets/product-backpack.jpg';
-import sunglassesImg from '@/assets/product-sunglasses.jpg';
-import laptopBagImg from '@/assets/product-laptop-bag.jpg';
-import earbudsImg from '@/assets/product-earbuds.jpg';
-
-const imageMap: Record<string, string> = {
-  'product-headphones': headphonesImg,
-  'product-watch': watchImg,
-  'product-backpack': backpackImg,
-  'product-sunglasses': sunglassesImg,
-  'product-laptop-bag': laptopBagImg,
-  'product-earbuds': earbudsImg,
-};
+import { Product } from "@/services/product.service";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { useCart } from "@/contexts/CartContext";
+import { Badge } from "@/components/ui/badge";
 
 interface ProductCardProps {
-  product: Product;
+  product: Product & { image?: string };
   index?: number;
 }
 
 export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
   const { addToCart } = useCart();
+
+  const imageUrl =
+    product.images?.[0]?.url ||
+    "https://placehold.co/600x600?text=No+Image";
 
   return (
     <motion.div
@@ -43,7 +31,7 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
         <Link to={`/product/${product.id}`} className="block">
           <div className="aspect-square overflow-hidden bg-muted">
             <motion.img
-              src={imageMap[product.image]}
+              src={imageUrl}
               alt={product.name}
               className="w-full h-full object-cover"
               whileHover={{ scale: 1.05 }}
@@ -51,7 +39,7 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
             />
           </div>
         </Link>
-        
+
         <div className="p-4 space-y-3">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
@@ -60,36 +48,39 @@ export const ProductCard = ({ product, index = 0 }: ProductCardProps) => {
                   {product.name}
                 </h3>
               </Link>
-              <p className="text-sm text-muted-foreground">{product.category}</p>
+              {product.category && (
+                <p className="text-sm text-muted-foreground">
+                  {product.category}
+                </p>
+              )}
             </div>
-            {product.featured && (
-              <Badge variant="secondary" className="text-xs">
-                Featured
+
+            {product.stock === 0 && (
+              <Badge variant="destructive" className="text-xs">
+                Out of stock
               </Badge>
             )}
           </div>
 
-          <div className="flex items-center gap-1 text-sm">
-            <Star className="h-4 w-4 fill-primary text-primary" />
-            <span className="font-medium">{product.rating}</span>
-            <span className="text-muted-foreground">(124)</span>
-          </div>
-
           <div className="flex items-center justify-between">
             <span className="text-2xl font-bold text-foreground">
-              ${product.price.toFixed(2)}
+              ₹{product.price.toFixed(2)}
             </span>
+
             <Button
               size="icon"
               onClick={() => addToCart(product)}
               className="rounded-full"
+              disabled={product.stock === 0}
             >
               <ShoppingCart className="h-4 w-4" />
             </Button>
           </div>
 
-          {product.stock < 10 && (
-            <p className="text-xs text-destructive">Only {product.stock} left in stock!</p>
+          {product.stock > 0 && product.stock < 10 && (
+            <p className="text-xs text-destructive">
+              Only {product.stock} left in stock!
+            </p>
           )}
         </div>
       </Card>

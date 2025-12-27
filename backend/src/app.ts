@@ -10,9 +10,29 @@ import uploadsRoutes from "./routes/uploads.routes";
 import { errorHandler } from "./middleware/error.middleware";
 
 const app = express();
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:8080",
+  "http://localhost:8081",
+];
 
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || "*" }));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow non-browser clients (Postman, curl)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(null, false);
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json({ limit: "5mb" }));
 
 app.use(
